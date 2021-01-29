@@ -1,0 +1,49 @@
+<odoo noupdate="0">
+    <record id="fulton_ach_payment_email_template" model="mail.template">
+        <field name="name">Email for ACH Payments</field>
+        <field name="email_from" />
+        <field name="email_cc" />
+        <field name="subject">Fulton Steam Remittance Advice</field>
+        <field
+            name="model_id"
+            ref="account_payment_order.model_account_payment_order"
+        />
+        <field eval="True" name="auto_delete" />
+        <field name="lang">${object.generated_user_id.lang}</field>
+        <field
+            name="body_html"
+        ><![CDATA[
+<p>A payment was processed on ${ctx['date']} for ${ctx['partner_name']} in the amount of ${ctx['total_amount']} with reference
+${ctx['payment_ref']}.</p>
+<table class="table table-bordered table-condensed" width="100%">
+    <tr>
+        <td style="border: 1px solid #000000;"><b>Invoice Date</b></td>
+        <td style="border: 1px solid #000000;"><b>Invoice No.</b></td>
+        <td style="border: 1px solid #000000;"><b>Credit ref#</b></td>
+        <td style="border: 1px solid #000000;"><b>Supp. Invoice#</b></td>
+        <td style="border: 1px solid #000000;"><b>Payment (in dollars)</b></td>
+        <td style="border: 1px solid #000000;"><b>Invoice Amount</b></td>
+        <td style="border: 1px solid #000000;"><b>Credit Amount</b></td>
+        <td style="border: 1px solid #000000;"><b>Discount (in dollars)</b></td>
+        <td style="border: 1px solid #000000;"><b>Due Amount</b></td>
+    </tr>
+    % set line_dict = ctx.get('line_data',False)
+    % for line in line_dict
+    <tr>
+        <td style="border: 1px solid #000000;">${line.get('inv_date') or ''}</td>
+        <td style="border: 1px solid #000000;">${line.get('inv_no') or ''}</td>
+        <td style="border: 1px solid #000000;">${line.get('credit_ref') or ''}</td>
+        <td style="border: 1px solid #000000;">${line.get('supp_inv') or ''}</td>
+        <td style="border: 1px solid #000000;">${'%.2f' % line.get('payment_amount') or ''}</td>
+        <td style="border: 1px solid #000000;">${'%.2f' % line.get('inv_amount') or ''}</td>
+        <td style="border: 1px solid #000000;">${'%.2f' % line.get('credit_amount') or ''}</td>
+        <td style="border: 1px solid #000000;">${line.get('discount') or ''}</td>
+        <td style="border: 1px solid #000000;">${'%.2f' % line.get('due_amount') or ''}</td>
+    </tr>
+    % endfor
+</table>
+<p>If you have any questions or concerns please contact accounts-payable@fulton.com</p>
+<p>Regards,</p>
+<p>Fulton Accounting</p>]]></field>
+    </record>
+</odoo>
