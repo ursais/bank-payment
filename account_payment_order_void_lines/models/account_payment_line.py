@@ -5,14 +5,10 @@ from odoo import fields, models
 
 
 class AccountPaymentLine(models.Model):
-    _inherit = 'account.payment.line'
+    _inherit = "account.payment.line"
 
-    is_voided = fields.Boolean(
-        string='Voided', default=False
-    )
-    void_date = fields.Date(
-        string='Void Date'
-    )
+    is_voided = fields.Boolean(string="Voided", default=False)
+    void_date = fields.Date(string="Void Date")
     void_reason = fields.Text(
-        string='Void Reason',
+        string="Void Reason",
     )

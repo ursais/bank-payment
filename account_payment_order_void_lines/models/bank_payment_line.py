@@ -5,16 +5,12 @@ from odoo import fields, models
 
 
 class BankPaymentLine(models.Model):
-    _inherit = 'bank.payment.line'
+    _inherit = "bank.payment.line"
 
-    is_voided = fields.Boolean(
-        string='Voided', default=False
-    )
-    void_date = fields.Date(
-        string='Void Date'
-    )
+    is_voided = fields.Boolean(string="Voided", default=False)
+    void_date = fields.Date(string="Void Date")
     void_reason = fields.Text(
-        string='Void Reason',
+        string="Void Reason",
     )
 
     def call_payment_void_wizard(self):

@@ -26,16 +26,19 @@ class CancelVoidPaymentLine(models.TransientModel):
                 move_line.remove_move_reconcile()
         move_id = bank_payment.order_id.move_ids
         new_move_date = date.today()
-        moves_vals_list.append(move_id.with_context(
-            include_business_fields=True).copy_data(
-            {"date": new_move_date,
-             "journal_id": move_id.journal_id.id,
-             "ref": (_("Reversal of: %s")) % (move_id.name),
-             'move_type': 'in_refund',
-             'partner_id': partner_id.id})[0])
-        reversed_move = self.env['account.move'].create(moves_vals_list)
-        for acm_line in reversed_move.line_ids.with_context(
-                check_move_validity=False):
+        moves_vals_list.append(
+            move_id.with_context(include_business_fields=True).copy_data(
+                {
+                    "date": new_move_date,
+                    "journal_id": move_id.journal_id.id,
+                    "ref": (_("Reversal of: %s")) % (move_id.name),
+                    "move_type": "in_refund",
+                    "partner_id": partner_id.id,
+                }
+            )[0]
+        )
+        reversed_move = self.env["account.move"].create(moves_vals_list)
+        for acm_line in reversed_move.line_ids.with_context(check_move_validity=False):
             acm_line.write(
                 {
                     "debit": acm_line.credit,
@@ -73,8 +76,7 @@ class CancelVoidPaymentLine(models.TransientModel):
             {
                 "line_ids": [
                     (3, unlink_ids.ids),
-                    (1, payment_line_id.id, {
-                     "debit": new_amount, "credit": 0.0}),
+                    (1, payment_line_id.id, {"debit": new_amount, "credit": 0.0}),
                 ]
             }
         )
@@ -103,9 +105,11 @@ class CancelVoidPaymentLine(models.TransientModel):
         bank_payment.void_reason = self.reason
         bank_payment.order_id.message_post(
             body=(
-                "Voiding Date: %s <br> Partner: %s <br> \
+                _(
+                    "Voiding Date: %s <br> Partner: %s <br> \
             Total Amount: %s <br> Invoice Ref #: %s \
             <br> Void Reason: %s"
+                )
                 % (
                     bank_payment.void_date,
                     bank_payment.partner_id.name,
@@ -118,7 +122,7 @@ class CancelVoidPaymentLine(models.TransientModel):
         for payment_line in bank_payment.payment_line_ids:
             payment_line.move_line_id.move_id.message_post(
                 body=(
-                    "Void Reason: %s <br> Void Date: %s"
+                    _("Void Reason: %s <br> Void Date: %s")
                     % (bank_payment.void_reason, bank_payment.void_date)
                 )
             )

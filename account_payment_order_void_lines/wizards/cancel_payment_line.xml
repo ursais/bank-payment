@@ -5,11 +5,16 @@
         <field name="arch" type="xml">
             <form string="Void Payment Line Wizard">
                 <group>
-                    <field name="reason" required="1"/>
+                    <field name="reason" required="1" />
                 </group>
                 <footer>
-                    <button class="oe_highlight" name="cancel_payment_line_entry" string="Confirm" type="object"/>
-                    <button class="oe_link" special="cancel" string="Cancel"/>
+                    <button
+                        class="oe_highlight"
+                        name="cancel_payment_line_entry"
+                        string="Confirm"
+                        type="object"
+                    />
+                    <button class="oe_link" special="cancel" string="Cancel" />
                 </footer>
             </form>
         </field>
