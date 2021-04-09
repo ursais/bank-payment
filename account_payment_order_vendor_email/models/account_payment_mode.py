@@ -42,7 +42,7 @@ class PaymentOrder(models.Model):
                         line_dict = {
                             "inv_no": payment_line.move_line_id.move_id.name or "",
                             "payment_amount": payment_line.amount_currency,
-                            # 'discount': payment_line.discount_amount,
+                            'discount': payment_line.discount_amount,
                             "inv_date": invoice_date or "",
                             "credit_ref": payment_line.order_id.name,
                             "supp_inv": payment_line.move_line_id.move_id.name or "",
