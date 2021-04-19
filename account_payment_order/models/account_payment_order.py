@@ -330,6 +330,8 @@ class AccountPaymentOrder(models.Model):
     def open2generated(self):
         self.ensure_one()
         payment_file_str, filename = self.generate_payment_file()
+        if isinstance(payment_file_str, str):
+            payment_file_str = payment_file_str.encode()
         action = {}
         if payment_file_str and filename:
             attachment = self.env['ir.attachment'].create({
