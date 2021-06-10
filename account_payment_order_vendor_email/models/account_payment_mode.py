@@ -30,6 +30,18 @@ class PaymentOrder(models.Model):
                     total_amount = bank_line.amount_currency
                     payment_ref = bank_line.name
                     line_data = []
+                    header_data = {
+                        "inv_no": "Invoice No.",
+                        "payment_amount": "Payment (in dollars)",
+                        "discount": "Discount (in dollars)",
+                        "inv_date": "Invoice Date",
+                        "credit_ref": "Credit ref#",
+                        "supp_inv": "Supp. Invoice#",
+                        "inv_amount": "Invoice Amount",
+                        "credit_amount": "Credit Amount",
+                        "due_amount": "Due Amount",
+                    }
+                    line_data.append(header_data)
                     for payment_line in bank_line.payment_line_ids:
                         invoice_date = (
                             payment_line.move_line_id.move_id.invoice_date
@@ -42,7 +54,7 @@ class PaymentOrder(models.Model):
                         line_dict = {
                             "inv_no": payment_line.move_line_id.move_id.name or "",
                             "payment_amount": payment_line.amount_currency,
-                            'discount': payment_line.discount_amount,
+                            "discount": payment_line.discount_amount,
                             "inv_date": invoice_date or "",
                             "credit_ref": payment_line.order_id.name,
                             "supp_inv": payment_line.move_line_id.move_id.name or "",
