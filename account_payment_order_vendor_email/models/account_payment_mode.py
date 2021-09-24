@@ -100,3 +100,9 @@ class PaymentOrder(models.Model):
         if self.payment_mode_id.send_email_to_partner:
             self.send_vendor_email()
         return res
+
+
+class AccountPaymentLine(models.Model):
+    _inherit = "account.payment.line"
+
+    discount_amount = fields.Monetary(currency_field="currency_id")
