@@ -33,7 +33,6 @@ class CancelVoidPaymentLine(models.TransientModel):
                     "invoice_date": new_move_date,
                     "journal_id": move_id.journal_id.id,
                     "ref": (_("Reversal of: %s")) % (move_id.name),
-                    "move_type": "in_refund",
                     "partner_id": partner_id.id,
                 }
             )[0]
