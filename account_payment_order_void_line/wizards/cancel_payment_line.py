@@ -18,13 +18,14 @@ class CancelVoidPaymentLine(models.TransientModel):
         bank_payment = self.env["bank.payment.line"].browse(
             self._context.get("active_id")
         )
-        partner_id = False
+        # find the counterpart line we are voiding
+        counterpart_lines = bank_payment.order_id.move_ids.line_ids
+        # account move line
+        move_line = counterpart_lines.filtered(lambda l: l.bank_payment_line_id.id == bank_payment.id)
+        # journal entry
+        move_id = move_line.move_id
         moves_vals_list = []
-        for move_line in bank_payment.order_id.move_ids.line_ids:
-            if move_line.partner_id == bank_payment.partner_id:
-                partner_id = move_line.partner_id
-                move_line.remove_move_reconcile()
-        move_id = bank_payment.order_id.move_ids
+        move_line.remove_move_reconcile()
         new_move_date = date.today()
         moves_vals_list.append(
             move_id.with_context(include_business_fields=True).copy_data(
@@ -33,33 +34,33 @@ class CancelVoidPaymentLine(models.TransientModel):
                     "invoice_date": new_move_date,
                     "journal_id": move_id.journal_id.id,
                     "ref": (_("Reversal of: %s")) % (move_id.name),
-                    "partner_id": partner_id.id,
+                    "partner_id": bank_payment.partner_id.id,
                 }
             )[0]
         )
+        # take out the voided payment and create a new entry
         reversed_move = self.env["account.move"].create(moves_vals_list)
         for acm_line in reversed_move.line_ids.with_context(check_move_validity=False):
             acm_line.write(
                 {
                     "debit": acm_line.credit,
                     "credit": acm_line.debit,
+                    "balance":-acm_line.balance,
                     "amount_currency": -acm_line.amount_currency,
+                    "amount_residual": -acm_line.amount_residual,
+                    "amount_residual_currency": -acm_line.amount_residual_currency,
                 }
             )
         reversed_move.recompute()
 
-        unlink_ids = self.env["account.move.line"].search(
-            [
-                ("partner_id", "!=", bank_payment.partner_id.id),
-                ("move_id", "=", reversed_move.id),
-            ]
-        )
-        debit = 0.0
-        credit = 0.0
-        for rec in unlink_ids:
-            debit += rec.debit
-            credit += rec.credit
+        # identify lines that need to be taken out from the reversed move
+        unlink_ids = reversed_move.mapped('line_ids').filtered(
+            lambda l: l.partner_id.id != bank_payment.partner_id.id and l.move_id.id == reversed_move.id and l.debit == 0)
+        debit = sum(unlink_ids.mapped('debit'))
+        credit = sum(unlink_ids.mapped('credit'))
         total = abs(debit - credit)
+
+        # identify line that needs to be adjusted for new payment amount
         payment_line_id = self.env["account.move.line"].search(
             [
                 ("move_id", "=", reversed_move.id),
@@ -72,6 +73,7 @@ class CancelVoidPaymentLine(models.TransientModel):
             ]
         )
         new_amount = abs(payment_line_id.debit - total)
+        # update reversed move
         reversed_move.write(
             {
                 "line_ids": [
