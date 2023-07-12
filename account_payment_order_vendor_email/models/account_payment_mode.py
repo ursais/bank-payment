@@ -59,7 +59,7 @@ class PaymentOrder(models.Model):
                             "discount": payment_line.discount_amount,
                             "inv_date": invoice_date or "",
                             "credit_ref": payment_line.order_id.name,
-                            "supp_inv": payment_line.move_line_id.move_id.name or "",
+                            "supp_inv": payment_line.move_line_id.move_id.payment_reference or "",
                             "inv_amount": payment_line.move_line_id.move_id.amount_total,
                             "credit_amount": payment_line.move_line_id.move_id.amount_untaxed,
                             "due_amount": payment_line.move_line_id.move_id.amount_residual,
