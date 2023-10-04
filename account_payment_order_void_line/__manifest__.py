@@ -15,7 +15,7 @@
     ],
     "data": [
         "security/ir.model.access.csv",
-        "views/bank_payment_line.xml",
+        #"views/bank_payment_line.xml",
         "views/account_payment_line.xml",
         "wizards/cancel_payment_line.xml",
     ],
