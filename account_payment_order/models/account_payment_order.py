@@ -1,19 +1,20 @@
 # © 2009 EduSense BV (<http://www.edusense.nl>)
 # © 2011-2013 Therp BV (<https://therp.nl>)
-# © 2016 Serv. Tecnol. Avanzados - Pedro M. Baeza
 # © 2016 Akretion (Alexis de Lattre - alexis.delattre@akretion.com)
+# Copyright 2016-2022 Tecnativa - Pedro M. Baeza
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
 import base64
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import float_compare
 
 
 class AccountPaymentOrder(models.Model):
     _name = "account.payment.order"
     _description = "Payment Order"
-    _inherit = ["mail.thread"]
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
     _check_company_auto = True
 
@@ -121,23 +122,18 @@ class AccountPaymentOrder(models.Model):
         readonly=True,
         states={"draft": [("readonly", False)]},
     )
-    bank_line_ids = fields.One2many(
-        comodel_name="bank.payment.line",
-        inverse_name="order_id",
-        string="Bank Transactions",
+    payment_ids = fields.One2many(
+        comodel_name="account.payment",
+        inverse_name="payment_order_id",
+        string="Payment Transactions",
         readonly=True,
-        help="The bank payment lines are used to generate the payment file. "
-        "They are automatically created from transaction lines upon "
-        "confirmation of the payment order: one bank payment line can "
-        "group several transaction lines if the option "
-        "'Group Transactions in Payment Orders' is active on the payment "
-        "mode.",
+    )
+    payment_count = fields.Integer(
+        compute="_compute_payment_count",
+        string="Number of Payment Transactions",
     )
     total_company_currency = fields.Monetary(
         compute="_compute_total", store=True, currency_field="company_currency_id"
-    )
-    bank_line_count = fields.Integer(
-        compute="_compute_bank_line_count", string="Number of Bank Transactions"
     )
     move_ids = fields.One2many(
         comodel_name="account.move",
@@ -207,10 +203,10 @@ class AccountPaymentOrder(models.Model):
                 rec.mapped("payment_line_ids.amount_company_currency") or [0.0]
             )
 
-    @api.depends("bank_line_ids")
-    def _compute_bank_line_count(self):
+    @api.depends("payment_ids")
+    def _compute_payment_count(self):
         for order in self:
-            order.bank_line_count = len(order.bank_line_ids)
+            order.payment_count = len(order.payment_ids)
 
     @api.depends("move_ids")
     def _compute_move_count(self):
@@ -250,11 +246,6 @@ class AccountPaymentOrder(models.Model):
             self.date_prefered = self.payment_mode_id.default_date_prefered
 
     def action_uploaded_cancel(self):
-        for move in self.move_ids:
-            move.button_cancel()
-            for move_line in move.line_ids:
-                move_line.remove_move_reconcile()
-            move.with_context(force_delete=True).unlink()
         self.action_cancel()
         return True
 
@@ -263,27 +254,19 @@ class AccountPaymentOrder(models.Model):
         return True
 
     def action_cancel(self):
-        for order in self:
-            order.write({"state": "cancel"})
-            order.bank_line_ids.unlink()
+        # Unreconcile and cancel payments
+        self.payment_ids.action_draft()
+        self.payment_ids.action_cancel()
+        self.write({"state": "cancel"})
         return True
-
-    @api.model
-    def _prepare_bank_payment_line(self, paylines):
-        return {
-            "order_id": paylines[0].order_id.id,
-            "payment_line_ids": [(6, 0, paylines.ids)],
-            "communication": "-".join([line.communication for line in paylines]),
-        }
 
     def draft2open(self):
         """
         Called when you click on the 'Confirm' button
         Set the 'date' on payment line depending on the 'date_prefered'
         setting of the payment.order
-        Re-generate the bank payment lines
+        Re-generate the account payments.
         """
-        bplo = self.env["bank.payment.line"]
         today = fields.Date.context_today(self)
         for order in self:
             if not order.journal_id:
@@ -302,12 +285,18 @@ class AccountPaymentOrder(models.Model):
                 raise UserError(
                     _("There are no transactions on payment order %s.") % order.name
                 )
-            # Delete existing bank payment lines
-            order.bank_line_ids.unlink()
-            # Create the bank payment lines from the payment lines
+            # Unreconcile, cancel and delete existing account payments
+            order.payment_ids.action_draft()
+            order.payment_ids.action_cancel()
+            order.payment_ids.unlink()
+            # Prepare account payments from the payment lines
+            payline_err_text = []
             group_paylines = {}  # key = hashcode
             for payline in order.payment_line_ids:
-                payline.draft2open_payment_line_check()
+                try:
+                    payline.draft2open_payment_line_check()
+                except UserError as e:
+                    payline_err_text.append(e.args[0])
                 # Compute requested payment date
                 if order.date_prefered == "due":
                     requested_date = payline.ml_maturity_date or payline.date or today
@@ -316,8 +305,7 @@ class AccountPaymentOrder(models.Model):
                 else:
                     requested_date = today
                 # No payment date in the past
-                if requested_date < today:
-                    requested_date = today
+                requested_date = max(today, requested_date)
                 # inbound: check option no_debit_before_maturity
                 if (
                     order.payment_type == "inbound"
@@ -325,7 +313,7 @@ class AccountPaymentOrder(models.Model):
                     and payline.ml_maturity_date
                     and requested_date < payline.ml_maturity_date
                 ):
-                    raise UserError(
+                    payline_err_text.append(
                         _(
                             "The payment mode '%s' has the option "
                             "'Disallow Debit Before Maturity Date'. The "
@@ -347,11 +335,11 @@ class AccountPaymentOrder(models.Model):
                 with self.env.norecompute():
                     payline.date = requested_date
                 # Group options
-                if order.payment_mode_id.group_lines:
-                    hashcode = payline.payment_line_hashcode()
-                else:
-                    # Use line ID as hascode, which actually means no grouping
-                    hashcode = payline.id
+                hashcode = (
+                    payline.payment_line_hashcode()
+                    if order.payment_mode_id.group_lines
+                    else payline.id
+                )
                 if hashcode in group_paylines:
                     group_paylines[hashcode]["paylines"] += payline
                     group_paylines[hashcode]["total"] += payline.amount_currency
@@ -360,8 +348,16 @@ class AccountPaymentOrder(models.Model):
                         "paylines": payline,
                         "total": payline.amount_currency,
                     }
+            # Raise errors that happened on the validation process
+            if payline_err_text:
+                raise UserError(
+                    _("There's at least one validation error:\n")
+                    + "\n".join(payline_err_text)
+                )
+
             order.recompute()
-            # Create bank payment lines
+            # Create account payments
+            payment_vals = []
             for paydict in list(group_paylines.values()):
                 # Block if a bank payment line is <= 0
                 if paydict["total"] <= 0:
@@ -369,8 +365,8 @@ class AccountPaymentOrder(models.Model):
                         _("The amount for Partner '%s' is negative " "or null (%.2f) !")
                         % (paydict["paylines"][0].partner_id.name, paydict["total"])
                     )
-                vals = self._prepare_bank_payment_line(paydict["paylines"])
-                bplo.create(vals)
+                payment_vals.append(paydict["paylines"]._prepare_account_payment_vals())
+            self.env["account.payment"].create(payment_vals)
         self.write({"state": "open"})
         return True
 
@@ -422,161 +418,54 @@ class AccountPaymentOrder(models.Model):
         return action
 
     def generated2uploaded(self):
-        for order in self:
-            if order.payment_mode_id.generate_move:
-                order.generate_move()
+        """Post payments and reconcile against source journal items
+
+        Partially reconcile payments that don't match their source journal items,
+        then reconcile the rest in one go.
+        """
+        self.payment_ids.action_post()
+        # Perform the reconciliation of payments and source journal items
+        for payment in self.payment_ids:
+            payment_move_line_id = payment.move_id.line_ids.filtered(
+                lambda x: x.account_id == payment.destination_account_id
+            )
+            apr = self.env["account.partial.reconcile"]
+            excl_pay_lines = self.env["account.payment.line"]
+            for line in payment.payment_line_ids:
+                if not line.move_line_id:
+                    continue
+                sign = -1 if payment.payment_order_id.payment_type == "outbound" else 1
+                if (
+                    float_compare(
+                        line.amount_currency,
+                        (line.move_line_id.amount_residual_currency * sign),
+                        precision_rounding=line.move_line_id.currency_id.rounding,
+                    )
+                    != 0
+                ):
+                    if line.move_line_id.amount_residual_currency < 0:
+                        debit_move_id = payment_move_line_id.id
+                        credit_move_id = line.move_line_id.id
+                    else:
+                        debit_move_id = line.move_line_id.id
+                        credit_move_id = payment_move_line_id.id
+                    apr.create(
+                        {
+                            "debit_move_id": debit_move_id,
+                            "credit_move_id": credit_move_id,
+                            "amount": abs(line.amount_company_currency),
+                            "debit_amount_currency": abs(line.amount_currency),
+                            "credit_amount_currency": abs(line.amount_currency),
+                        }
+                    )
+                    excl_pay_lines |= line
+            pay_lines = payment.payment_line_ids - excl_pay_lines
+            if pay_lines:
+                (pay_lines.move_line_id + payment_move_line_id).reconcile()
         self.write(
             {"state": "uploaded", "date_uploaded": fields.Date.context_today(self)}
         )
         return True
-
-    def _prepare_move(self, bank_lines=None):
-        if self.payment_type == "outbound":
-            ref = _("Payment order %s") % self.name
-        else:
-            ref = _("Debit order %s") % self.name
-        if bank_lines and len(bank_lines) == 1:
-            ref += " - " + bank_lines.name
-        vals = {
-            "date": bank_lines[0].date,
-            "journal_id": self.journal_id.id,
-            "ref": ref,
-            "payment_order_id": self.id,
-            "line_ids": [],
-        }
-        total_company_currency = total_payment_currency = 0
-        for bline in bank_lines:
-            total_company_currency += bline.amount_company_currency
-            total_payment_currency += bline.amount_currency
-            partner_ml_vals = self._prepare_move_line_partner_account(bline)
-            vals["line_ids"].append((0, 0, partner_ml_vals))
-        trf_ml_vals = self._prepare_move_line_offsetting_account(
-            total_company_currency, total_payment_currency, bank_lines
-        )
-        vals["line_ids"].append((0, 0, trf_ml_vals))
-        return vals
-
-    def _prepare_move_line_offsetting_account(
-        self, amount_company_currency, amount_payment_currency, bank_lines
-    ):
-        vals = {}
-        if self.payment_type == "outbound":
-            account_id = self.journal_id.payment_credit_account_id.id
-        else:
-            account_id = self.journal_id.payment_debit_account_id.id
-
-        partner_id = False
-        for index, bank_line in enumerate(bank_lines):
-            if index == 0:
-                partner_id = bank_line.payment_line_ids[0].partner_id.id
-            elif bank_line.payment_line_ids[0].partner_id.id != partner_id:
-                # we have different partners in the grouped move
-                partner_id = False
-                break
-        vals.update(
-            {
-                "partner_id": partner_id,
-                "account_id": account_id,
-                "credit": (
-                    self.payment_type == "outbound" and amount_company_currency or 0.0
-                ),
-                "debit": (
-                    self.payment_type == "inbound" and amount_company_currency or 0.0
-                ),
-            }
-        )
-        if bank_lines[0].currency_id != bank_lines[0].company_currency_id:
-            sign = self.payment_type == "outbound" and -1 or 1
-            vals.update(
-                {
-                    "currency_id": bank_lines[0].currency_id.id,
-                    "amount_currency": amount_payment_currency * sign,
-                }
-            )
-        return vals
-
-    def _prepare_move_line_partner_account(self, bank_line):
-        if bank_line.payment_line_ids[0].move_line_id:
-            account_id = bank_line.payment_line_ids[0].move_line_id.account_id.id
-        else:
-            if self.payment_type == "inbound":
-                account_id = bank_line.partner_id.property_account_receivable_id.id
-            else:
-                account_id = bank_line.partner_id.property_account_payable_id.id
-        if self.payment_type == "outbound":
-            name = _("Payment bank line %s") % bank_line.name
-        else:
-            name = _("Debit bank line %s") % bank_line.name
-        vals = {
-            "name": name,
-            "bank_payment_line_id": bank_line.id,
-            "partner_id": bank_line.partner_id.id,
-            "account_id": account_id,
-            "credit": (
-                self.payment_type == "inbound"
-                and bank_line.amount_company_currency
-                or 0.0
-            ),
-            "debit": (
-                self.payment_type == "outbound"
-                and bank_line.amount_company_currency
-                or 0.0
-            ),
-        }
-
-        if bank_line.currency_id != bank_line.company_currency_id:
-            sign = self.payment_type == "inbound" and -1 or 1
-            vals.update(
-                {
-                    "currency_id": bank_line.currency_id.id,
-                    "amount_currency": bank_line.amount_currency * sign,
-                }
-            )
-        return vals
-
-    def _create_reconcile_move(self, hashcode, blines):
-        self.ensure_one()
-        post_move = self.payment_mode_id.post_move
-        am_obj = self.env["account.move"]
-        mvals = self._prepare_move(blines)
-        move = am_obj.create(mvals)
-        if post_move:
-            move.action_post()
-        blines.reconcile_payment_lines()
-
-    def _prepare_trf_moves(self):
-        """
-        prepare a dict "trfmoves" that can be used when
-        self.payment_mode_id.move_option = date or line
-        key = unique identifier (date or True or line.id)
-        value = bank_pay_lines (recordset that can have several entries)
-        """
-        self.ensure_one()
-        trfmoves = {}
-        for bline in self.bank_line_ids:
-            hashcode = bline.move_line_offsetting_account_hashcode()
-            if hashcode in trfmoves:
-                trfmoves[hashcode] += bline
-            else:
-                trfmoves[hashcode] = bline
-        return trfmoves
-
-    def generate_move(self):
-        """
-        Create the moves that pay off the move lines from
-        the payment/debit order.
-        """
-        self.ensure_one()
-        trfmoves = self._prepare_trf_moves()
-        for hashcode, blines in trfmoves.items():
-            self._create_reconcile_move(hashcode, blines)
-
-    def action_bank_payment_line(self):
-        self.ensure_one()
-        action = self.env.ref("account_payment_order.bank_payment_line_action")
-        action_dict = action.read()[0]
-        action_dict["domain"] = [("id", "in", self.bank_line_ids.ids)]
-        return action_dict
 
     def action_move_journal_line(self):
         self.ensure_one()

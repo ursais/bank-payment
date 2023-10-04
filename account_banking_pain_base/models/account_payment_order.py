@@ -1,7 +1,7 @@
 # Copyright 2013-2016 Akretion - Alexis de Lattre <alexis.delattre@akretion.com>
-# Copyright 2014 Serv. Tecnol. Avanzados - Pedro M. Baeza
 # Copyright 2016 Antiun Ingenieria S.L. - Antonio Espinosa
 # Copyright 2021 Tecnativa - Carlos Roca
+# Copyright 2014-2022 Tecnativa - Pedro M. Baeza
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
 import logging
@@ -61,10 +61,12 @@ class AccountPaymentOrder(models.Model):
     @api.model
     def _sepa_iban_prefix_list(self):
         # List of IBAN prefixes (not country codes !)
-        # Source: https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2020-10/EPC409-09%20EPC%20List%20of%20SEPA%20Scheme%20Countries%20v3.0_1.pdf  # noqa: B950
+        # Source: https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2023-01/EPC409-09%20EPC%20List%20of%20SEPA%20Scheme%20Countries%20v4.0_0.pdf  # noqa: B950
         # Some countries use IBAN but are not part of the SEPA zone
         # example: Turkey, Madagascar, Tunisia, etc.
         return [
+            "AD",
+            "AT",
             "BE",
             "BG",
             "ES",
@@ -502,27 +504,6 @@ class AccountPaymentOrder(models.Model):
         """Generate the piece of the XML corresponding to PstlAdr"""
         if partner.country_id:
             postal_address = etree.SubElement(parent_node, "PstlAdr")
-            if gen_args.get("pain_flavor").startswith("pain.001.001.") or gen_args.get(
-                "pain_flavor"
-            ).startswith("pain.008.001."):
-                if partner.zip:
-                    pstcd = etree.SubElement(postal_address, "PstCd")
-                    pstcd.text = self._prepare_field(
-                        "Postal Code",
-                        "partner.zip",
-                        {"partner": partner},
-                        16,
-                        gen_args=gen_args,
-                    )
-                if partner.city:
-                    twnnm = etree.SubElement(postal_address, "TwnNm")
-                    twnnm.text = self._prepare_field(
-                        "Town Name",
-                        "partner.city",
-                        {"partner": partner},
-                        35,
-                        gen_args=gen_args,
-                    )
             country = etree.SubElement(postal_address, "Ctry")
             country.text = self._prepare_field(
                 "Country",
@@ -540,7 +521,33 @@ class AccountPaymentOrder(models.Model):
                     70,
                     gen_args=gen_args,
                 )
-
+            if (
+                gen_args.get("pain_flavor").startswith("pain.001.001.")
+                or gen_args.get("pain_flavor").startswith("pain.008.001.")
+            ) and (partner.zip or partner.city):
+                adrline2 = etree.SubElement(postal_address, "AdrLine")
+                val = []
+                if partner.zip:
+                    val.append(
+                        self._prepare_field(
+                            "zip",
+                            "partner.zip",
+                            {"partner": partner},
+                            70,
+                            gen_args=gen_args,
+                        )
+                    )
+                if partner.city:
+                    val.append(
+                        self._prepare_field(
+                            "city",
+                            "partner.city",
+                            {"partner": partner},
+                            70,
+                            gen_args=gen_args,
+                        )
+                    )
+                adrline2.text = " ".join(val)
         return True
 
     @api.model
@@ -604,11 +611,12 @@ class AccountPaymentOrder(models.Model):
     @api.model
     def generate_remittance_info_block(self, parent_node, line, gen_args):
         remittance_info = etree.SubElement(parent_node, "RmtInf")
-        if line.communication_type == "normal":
+        communication_type = line.payment_line_ids[:1].communication_type
+        if communication_type == "normal":
             remittance_info_unstructured = etree.SubElement(remittance_info, "Ustrd")
             remittance_info_unstructured.text = self._prepare_field(
                 "Remittance Unstructured Information",
-                "line.communication",
+                "line.payment_reference",
                 {"line": line},
                 140,
                 gen_args=gen_args,
@@ -630,7 +638,7 @@ class AccountPaymentOrder(models.Model):
                 creditor_ref_info_type_issuer = etree.SubElement(
                     creditor_ref_info_type, "Issr"
                 )
-                creditor_ref_info_type_issuer.text = line.communication_type
+                creditor_ref_info_type_issuer.text = communication_type
                 creditor_reference = etree.SubElement(
                     creditor_ref_information, "CdtrRef"
                 )
@@ -649,13 +657,13 @@ class AccountPaymentOrder(models.Model):
                     creditor_ref_info_type_issuer = etree.SubElement(
                         creditor_ref_info_type, "Issr"
                     )
-                    creditor_ref_info_type_issuer.text = line.communication_type
+                    creditor_ref_info_type_issuer.text = communication_type
 
                 creditor_reference = etree.SubElement(creditor_ref_information, "Ref")
 
             creditor_reference.text = self._prepare_field(
                 "Creditor Structured Reference",
-                "line.communication",
+                "line.payment_reference",
                 {"line": line},
                 35,
                 gen_args=gen_args,

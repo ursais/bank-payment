@@ -21,14 +21,17 @@ msgstr ""
 #. module: account_payment_order
 #: code:addons/account_payment_order/models/account_move.py:0
 #, python-format
-msgid "%d payment lines added to the existing draft payment order %s."
+msgid ""
+"%d payment lines added to the existing draft payment order <a href=# data-oe-"
+"model=account.payment.order data-oe-id=%d>%s</a>."
 msgstr ""
 
 #. module: account_payment_order
 #: code:addons/account_payment_order/models/account_move.py:0
 #, python-format
 msgid ""
-"%d payment lines added to the new draft payment order %s which has been "
+"%d payment lines added to the new draft payment order <a href=# data-oe-"
+"model=account.payment.order data-oe-id=%d>%s</a> which has been "
 "automatically created."
 msgstr ""
 
@@ -81,11 +84,6 @@ msgid "Accounting / Payments"
 msgstr ""
 
 #. module: account_payment_order
-#: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_mode_form
-msgid "Accounting Entries Options"
-msgstr ""
-
-#. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__message_needaction
 msgid "Action Needed"
 msgstr ""
@@ -95,6 +93,26 @@ msgstr ""
 msgid ""
 "Activate this option if this payment method requires you to know the bank "
 "account number of your customer or supplier."
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_ids
+msgid "Activities"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_state
+msgid "Activity State"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_type_icon
+msgid "Activity Type Icon"
 msgstr ""
 
 #. module: account_payment_order
@@ -142,7 +160,6 @@ msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__amount_currency
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__amount_currency
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_line_tree
 #: model_terms:ir.ui.view,arch_db:account_payment_order.print_account_payment_order_document
 msgid "Amount"
@@ -150,7 +167,6 @@ msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__amount_company_currency
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__amount_company_currency
 msgid "Amount in Company Currency"
 msgstr ""
 
@@ -181,7 +197,6 @@ msgid "Bank"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__partner_bank_id
 #: model_terms:ir.ui.view,arch_db:account_payment_order.print_account_payment_order_document
 msgid "Bank Account"
 msgstr ""
@@ -198,41 +213,8 @@ msgid "Bank Journal"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_move_line__bank_payment_line_id
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__bank_line_id
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_form
-msgid "Bank Payment Line"
-msgstr ""
-
-#. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__name
-msgid "Bank Payment Line Ref"
-msgstr ""
-
-#. module: account_payment_order
-#: model:ir.actions.act_window,name:account_payment_order.bank_payment_line_action
-#: model:ir.model,name:account_payment_order.model_bank_payment_line
-#: model:ir.ui.menu,name:account_payment_order.bank_payment_line_menu
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_tree
-msgid "Bank Payment Lines"
-msgstr ""
-
-#. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__bank_line_ids
-#: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_form
-#: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_tree
-msgid "Bank Transactions"
-msgstr ""
-
-#. module: account_payment_order
 #: model:ir.model.fields,help:account_payment_order.field_account_move_line__partner_bank_id
 msgid "Bank account on which we should pay the supplier"
-msgstr ""
-
-#. module: account_payment_order
-#: code:addons/account_payment_order/models/bank_payment_line.py:0
-#, python-format
-msgid "Can not reconcile: no move line for payment line %s of partner '%s'."
 msgstr ""
 
 #. module: account_payment_order
@@ -245,14 +227,6 @@ msgstr "Loobu"
 #. module: account_payment_order
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_form
 msgid "Cancel Payments"
-msgstr ""
-
-#. module: account_payment_order
-#: code:addons/account_payment_order/models/bank_payment_line.py:0
-#, python-format
-msgid ""
-"Cannot delete a payment order line whose payment order is in state '%s'. You "
-"need to cancel it first."
 msgstr ""
 
 #. module: account_payment_order
@@ -270,13 +244,11 @@ msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__communication
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__communication
 msgid "Communication"
 msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__communication_type
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__communication_type
 msgid "Communication Type"
 msgstr ""
 
@@ -289,7 +261,6 @@ msgstr ""
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__company_id
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__company_id
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__company_id
 msgid "Company"
 msgstr ""
 
@@ -344,7 +315,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__create_uid
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line_create__create_uid
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__create_uid
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__create_uid
 #: model_terms:ir.ui.view,arch_db:account_payment_order.view_attachment_simplified_form
 msgid "Created by"
 msgstr ""
@@ -354,21 +324,18 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__create_date
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line_create__create_date
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__create_date
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__create_date
 msgid "Created on"
 msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__company_currency_id
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__company_currency_id
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__company_currency_id
 #: model_terms:ir.ui.view,arch_db:account_payment_order.print_account_payment_order_document
 msgid "Currency"
 msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__currency_id
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__currency_id
 msgid "Currency of the Payment Transaction"
 msgstr ""
 
@@ -381,18 +348,6 @@ msgstr ""
 #: model:ir.actions.act_window,name:account_payment_order.account_payment_order_inbound_action
 #: model:ir.ui.menu,name:account_payment_order.account_payment_order_inbound_menu
 msgid "Debit Orders"
-msgstr ""
-
-#. module: account_payment_order
-#: code:addons/account_payment_order/models/account_payment_order.py:0
-#, python-format
-msgid "Debit bank line %s"
-msgstr ""
-
-#. module: account_payment_order
-#: code:addons/account_payment_order/models/account_payment_order.py:0
-#, python-format
-msgid "Debit order %s"
 msgstr ""
 
 #. module: account_payment_order
@@ -421,7 +376,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_method__display_name
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_mode__display_name
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__display_name
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__display_name
 #: model:ir.model.fields,field_description:account_payment_order.field_report_account_payment_order_print_account_payment_order_main__display_name
 #: model:ir.model.fields,field_description:account_payment_order.field_res_bank__display_name
 msgid "Display Name"
@@ -498,11 +452,8 @@ msgid "Followers (Partners)"
 msgstr ""
 
 #. module: account_payment_order
-#: code:addons/account_payment_order/models/bank_payment_line.py:0
-#, python-format
-msgid ""
-"For partner '%s', the account of the account move line to pay (%s) is "
-"different from the account of of the transit move line (%s)."
+#: model:ir.model.fields,help:account_payment_order.field_account_payment_order__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
 msgstr ""
 
 #. module: account_payment_order
@@ -528,11 +479,6 @@ msgid "Free Reference"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_mode__generate_move
-msgid "Generate Accounting Entries On File Upload"
-msgstr ""
-
-#. module: account_payment_order
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_form
 msgid "Generate Payment File"
 msgstr ""
@@ -549,7 +495,6 @@ msgstr ""
 
 #. module: account_payment_order
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_search
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_search
 msgid "Group By"
 msgstr ""
 
@@ -569,10 +514,19 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_method__id
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_mode__id
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__id
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__id
 #: model:ir.model.fields,field_description:account_payment_order.field_report_account_payment_order_print_account_payment_order_main__id
 #: model:ir.model.fields,field_description:account_payment_order.field_res_bank__id
 msgid "ID"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,help:account_payment_order.field_account_payment_order__activity_exception_icon
+msgid "Icon to indicate an exception activity."
 msgstr ""
 
 #. module: account_payment_order
@@ -617,7 +571,6 @@ msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields.selection,name:account_payment_order.selection__account_payment_order__payment_type__inbound
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_search
 msgid "Inbound"
 msgstr ""
 
@@ -690,7 +643,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_method____last_update
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_mode____last_update
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order____last_update
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line____last_update
 #: model:ir.model.fields,field_description:account_payment_order.field_report_account_payment_order_print_account_payment_order_main____last_update
 #: model:ir.model.fields,field_description:account_payment_order.field_res_bank____last_update
 msgid "Last Modified on"
@@ -701,7 +653,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__write_uid
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line_create__write_uid
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__write_uid
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__write_uid
 msgid "Last Updated by"
 msgstr ""
 
@@ -710,7 +661,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__write_date
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line_create__write_date
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__write_date
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__write_date
 msgid "Last Updated on"
 msgstr ""
 
@@ -775,19 +725,28 @@ msgid "Move Lines"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_mode__move_option
-msgid "Move Option"
-msgstr ""
-
-#. module: account_payment_order
-#: code:addons/account_payment_order/models/bank_payment_line.py:0
-#, python-format
-msgid "Move line '%s' of partner '%s' has already been reconciled"
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__my_activity_date_deadline
+msgid "My Activity Deadline"
 msgstr ""
 
 #. module: account_payment_order
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_search
 msgid "Name or Description"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_type_id
+msgid "Next Activity Type"
 msgstr ""
 
 #. module: account_payment_order
@@ -823,13 +782,13 @@ msgid "Number of Actions"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__bank_line_count
-msgid "Number of Bank Transactions"
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__move_count
+msgid "Number of Journal Entries"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__move_count
-msgid "Number of Journal Entries"
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__payment_count
+msgid "Number of Payment Transactions"
 msgstr ""
 
 #. module: account_payment_order
@@ -853,27 +812,14 @@ msgid "Number of unread messages"
 msgstr ""
 
 #. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment__old_bank_payment_line_name
+msgid "Old Bank Payment Line Name"
+msgstr ""
+
+#. module: account_payment_order
 #: code:addons/account_payment_order/models/account_payment_order.py:0
 #, python-format
 msgid "On payment order %s, the Payment Execution Date is in the past (%s)."
-msgstr ""
-
-#. module: account_payment_order
-#: code:addons/account_payment_order/models/account_payment_mode.py:0
-#, python-format
-msgid ""
-"On the payment mode '%s', you must choose an option for the 'Move Option' "
-"parameter."
-msgstr ""
-
-#. module: account_payment_order
-#: model:ir.model.fields.selection,name:account_payment_order.selection__account_payment_mode__move_option__date
-msgid "One move per payment date"
-msgstr ""
-
-#. module: account_payment_order
-#: model:ir.model.fields.selection,name:account_payment_order.selection__account_payment_mode__move_option__line
-msgid "One move per payment line"
 msgstr ""
 
 #. module: account_payment_order
@@ -887,13 +833,7 @@ msgid "Options for Payment Orders"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__order_id
-msgid "Order"
-msgstr ""
-
-#. module: account_payment_order
 #: model:ir.model.fields.selection,name:account_payment_order.selection__account_payment_order__payment_type__outbound
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_search
 msgid "Outbound"
 msgstr ""
 
@@ -904,8 +844,6 @@ msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__partner_id
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__partner_id
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_search
 #: model_terms:ir.ui.view,arch_db:account_payment_order.print_account_payment_order_document
 msgid "Partner"
 msgstr ""
@@ -923,7 +861,6 @@ msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__date
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__date
 msgid "Payment Date"
 msgstr ""
 
@@ -944,9 +881,13 @@ msgid "Payment File"
 msgstr ""
 
 #. module: account_payment_order
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment__payment_line_ids
+msgid "Payment Line"
+msgstr ""
+
+#. module: account_payment_order
 #: model:ir.actions.act_window,name:account_payment_order.account_payment_line_action
 #: model:ir.model,name:account_payment_order.model_account_payment_line
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__payment_line_ids
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_line_form
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_line_tree
 msgid "Payment Lines"
@@ -1014,16 +955,16 @@ msgid "Payment Reference"
 msgstr ""
 
 #. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__payment_type
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__payment_type
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__payment_type
-msgid "Payment Type"
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__payment_ids
+#: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_form
+#: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_tree
+msgid "Payment Transactions"
 msgstr ""
 
 #. module: account_payment_order
-#: code:addons/account_payment_order/models/account_payment_order.py:0
-#, python-format
-msgid "Payment bank line %s"
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__payment_type
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__payment_type
+msgid "Payment Type"
 msgstr ""
 
 #. module: account_payment_order
@@ -1032,19 +973,13 @@ msgid "Payment lines"
 msgstr ""
 
 #. module: account_payment_order
-#: code:addons/account_payment_order/models/account_payment_order.py:0
-#, python-format
-msgid "Payment order %s"
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__payment_ids
+msgid "Payment transaction"
 msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model,name:account_payment_order.model_account_payment
 msgid "Payments"
-msgstr ""
-
-#. module: account_payment_order
-#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_mode__post_move
-msgid "Post Move"
 msgstr ""
 
 #. module: account_payment_order
@@ -1055,8 +990,8 @@ msgid "Reference Type"
 msgstr ""
 
 #. module: account_payment_order
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_form
-msgid "Related Payment Lines"
+#: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__activity_user_id
+msgid "Responsible User"
 msgstr ""
 
 #. module: account_payment_order
@@ -1078,11 +1013,6 @@ msgstr ""
 #. module: account_payment_order
 #: model:ir.model.fields.selection,name:account_payment_order.selection__account_payment_mode__default_payment_mode__same_or_null
 msgid "Same or empty"
-msgstr ""
-
-#. module: account_payment_order
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_search
-msgid "Search Bank Payment Lines"
 msgstr ""
 
 #. module: account_payment_order
@@ -1122,14 +1052,21 @@ msgstr ""
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line__state
 #: model_terms:ir.ui.view,arch_db:account_payment_order.account_payment_order_search
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_search
 msgid "State"
 msgstr ""
 
 #. module: account_payment_order
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_order__state
-#: model:ir.model.fields,field_description:account_payment_order.field_bank_payment_line__state
 msgid "Status"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,help:account_payment_order.field_account_payment_order__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
 msgstr ""
 
 #. module: account_payment_order
@@ -1152,16 +1089,6 @@ msgstr ""
 #: code:addons/account_payment_order/models/account_payment_order.py:0
 #, python-format
 msgid "The amount for Partner '%s' is negative or null (%.2f) !"
-msgstr ""
-
-#. module: account_payment_order
-#: model:ir.model.fields,help:account_payment_order.field_account_payment_order__bank_line_ids
-msgid ""
-"The bank payment lines are used to generate the payment file. They are "
-"automatically created from transaction lines upon confirmation of the "
-"payment order: one bank payment line can group several transaction lines if "
-"the option 'Group Transactions in Payment Orders' is active on the payment "
-"mode."
 msgstr ""
 
 #. module: account_payment_order
@@ -1194,6 +1121,12 @@ msgid "There are no transactions on payment order %s."
 msgstr ""
 
 #. module: account_payment_order
+#: code:addons/account_payment_order/models/account_payment_order.py:0
+#, python-format
+msgid "There's at least one validation error:\n"
+msgstr ""
+
+#. module: account_payment_order
 #: model:ir.model.fields,help:account_payment_order.field_account_payment_line__ml_maturity_date
 msgid ""
 "This field is used for payable and receivable journal entries. You can put "
@@ -1215,11 +1148,6 @@ msgstr ""
 #. module: account_payment_order
 #: model_terms:ir.ui.view,arch_db:account_payment_order.print_account_payment_order_document
 msgid "Total (Currency)"
-msgstr ""
-
-#. module: account_payment_order
-#: model_terms:ir.ui.view,arch_db:account_payment_order.bank_payment_line_tree
-msgid "Total Amount"
 msgstr ""
 
 #. module: account_payment_order
@@ -1248,6 +1176,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_line_create__date_type
 #: model:ir.model.fields,field_description:account_payment_order.field_account_payment_mode__default_date_type
 msgid "Type of Date Filter"
+msgstr ""
+
+#. module: account_payment_order
+#: model:ir.model.fields,help:account_payment_order.field_account_payment_order__activity_exception_decoration
+msgid "Type of the exception activity on record."
 msgstr ""
 
 #. module: account_payment_order

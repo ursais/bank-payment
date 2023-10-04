@@ -1,12 +1,12 @@
 # Copyright 2017 Camptocamp SA
 # Copyright 2017 Creu Blanca
-# Copyright 2019 Tecnativa - Pedro M. Baeza
+# Copyright 2019-2022 Tecnativa - Pedro M. Baeza
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 from datetime import date, timedelta
 
 from odoo.exceptions import UserError, ValidationError
-from odoo.tests.common import Form
+from odoo.tests.common import Form, tagged
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
@@ -77,6 +77,7 @@ class TestPaymentOrderInboundBase(AccountTestInvoicingCommon):
         return invoice_form.save()
 
 
+@tagged("post_install", "-at_install")
 class TestPaymentOrderInbound(TestPaymentOrderInboundBase):
     def test_constrains_type(self):
         with self.assertRaises(ValidationError):
@@ -89,6 +90,19 @@ class TestPaymentOrderInbound(TestPaymentOrderInboundBase):
         with self.assertRaises(ValidationError):
             self.inbound_order.date_scheduled = date.today() - timedelta(days=1)
 
+    def test_invoice_communication_01(self):
+        self.assertEqual(
+            self.invoice.name, self.invoice._get_payment_order_communication()
+        )
+        self.invoice.ref = "R1234"
+        self.assertEqual(
+            self.invoice.name, self.invoice._get_payment_order_communication()
+        )
+
+    def test_invoice_communication_02(self):
+        self.invoice.payment_reference = "R1234"
+        self.assertEqual("R1234", self.invoice._get_payment_order_communication())
+
     def test_creation(self):
         payment_order = self.inbound_order
         self.assertEqual(len(payment_order.ids), 1)
@@ -96,12 +110,12 @@ class TestPaymentOrderInbound(TestPaymentOrderInboundBase):
         payment_order.write({"journal_id": self.journal.id})
 
         self.assertEqual(len(payment_order.payment_line_ids), 1)
-        self.assertEqual(len(payment_order.bank_line_ids), 0)
+        self.assertFalse(payment_order.payment_ids)
 
         # Open payment order
         payment_order.draft2open()
 
-        self.assertEqual(payment_order.bank_line_count, 1)
+        self.assertEqual(payment_order.payment_count, 1)
 
         # Generate and upload
         payment_order.open2generated()
@@ -110,11 +124,11 @@ class TestPaymentOrderInbound(TestPaymentOrderInboundBase):
         self.assertEqual(payment_order.state, "uploaded")
         with self.assertRaises(UserError):
             payment_order.unlink()
+        matching_number = (
+            payment_order.payment_ids.payment_line_ids.move_line_id.matching_number
+        )
+        self.assertTrue(matching_number and matching_number != "P")
 
-        bank_line = payment_order.bank_line_ids
-
-        with self.assertRaises(UserError):
-            bank_line.unlink()
         payment_order.action_uploaded_cancel()
         self.assertEqual(payment_order.state, "cancel")
         payment_order.cancel2draft()

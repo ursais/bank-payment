@@ -39,6 +39,31 @@ class AccountMove(models.Model):
                 payment_mode = move.payment_mode_id
             move.payment_order_ok = payment_mode.payment_order_ok
 
+    def _get_payment_order_communication(self):
+        """
+        Retrieve the communication string for the payment order
+        """
+        communication = self.payment_reference or self.ref or self.name or ""
+        if self.is_invoice():
+            if (self.reference_type or "none") != "none":
+                communication = self.ref
+            elif self.is_purchase_document():
+                communication = self.ref or self.payment_reference
+            else:
+                communication = self.payment_reference or self.name
+        # If we have credit note(s) - reversal_move_id is a one2many
+        if self.reversal_move_id:
+            references = []
+            references.extend(
+                [
+                    move._get_payment_order_communication()
+                    for move in self.reversal_move_id
+                    if move.payment_reference or move.ref
+                ]
+            )
+            communication += " " + " ".join(references)
+        return communication
+
     def _prepare_new_payment_order(self, payment_mode=None):
         self.ensure_one()
         if payment_mode is None:
@@ -53,7 +78,7 @@ class AccountMove(models.Model):
 
     def create_account_payment_line(self):
         apoo = self.env["account.payment.order"]
-        result_payorder_ids = []
+        result_payorder_ids = set()
         action_payment_type = "debit"
         for move in self:
             if move.state != "posted":
@@ -91,7 +116,7 @@ class AccountMove(models.Model):
                         move._prepare_new_payment_order(payment_mode)
                     )
                     new_payorder = True
-                result_payorder_ids.append(payorder.id)
+                result_payorder_ids.add(payorder.id)
                 action_payment_type = payorder.payment_type
                 count = 0
                 for line in applicable_lines.filtered(
@@ -103,17 +128,20 @@ class AccountMove(models.Model):
                     move.message_post(
                         body=_(
                             "%d payment lines added to the new draft payment "
-                            "order %s which has been automatically created."
+                            "order <a href=# data-oe-model=account.payment.order "
+                            "data-oe-id=%d>%s</a> which has been automatically created."
                         )
-                        % (count, payorder.name)
+                        % (count, payorder.id, payorder.display_name)
                     )
                 else:
                     move.message_post(
                         body=_(
                             "%d payment lines added to the existing draft "
-                            "payment order %s."
+                            "payment order "
+                            "<a href=# data-oe-model=account.payment.order "
+                            "data-oe-id=%d>%s</a>."
                         )
-                        % (count, payorder.name)
+                        % (count, payorder.id, payorder.display_name)
                     )
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "account_payment_order.account_payment_order_%s_action"
@@ -131,7 +159,7 @@ class AccountMove(models.Model):
             action.update(
                 {
                     "view_mode": "tree,form,pivot,graph",
-                    "domain": "[('id', 'in', %s)]" % result_payorder_ids,
+                    "domain": "[('id', 'in', %s)]" % list(result_payorder_ids),
                     "views": False,
                 }
             )

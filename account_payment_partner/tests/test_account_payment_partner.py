@@ -31,10 +31,7 @@ class TestAccountPaymentPartner(SavepointCase):
             cls.chart = charts[0]
         else:
             raise ValidationError(_("No Chart of Account Template has been defined !"))
-        old_company = cls.env.user.company_id
-        cls.env.user.company_id = cls.company_2.id
-        cls.chart.try_loading()
-        cls.env.user.company_id = old_company.id
+        cls.chart.with_company(cls.company_2).try_loading()
 
         # refs
         cls.manual_out = cls.env.ref("account.account_payment_method_manual_out")
@@ -294,6 +291,14 @@ class TestAccountPaymentPartner(SavepointCase):
             lambda l: l.account_id.user_type_id == self.acct_type_payable
         )
         self.assertEqual(invoice.payment_mode_id, aml[0].payment_mode_id)
+        # Test payment mode change on aml
+        mode = self.supplier_payment_mode.copy()
+        aml.payment_mode_id = mode
+        self.assertEqual(invoice.payment_mode_id, mode)
+        # Test payment mode editability on account move
+        self.assertFalse(invoice.has_reconciled_items)
+        invoice.payment_mode_id = self.supplier_payment_mode
+        self.assertEqual(aml.payment_mode_id, self.supplier_payment_mode)
 
     def test_invoice_create_out_invoice(self):
         invoice = self._create_invoice(

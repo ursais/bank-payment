@@ -18,12 +18,6 @@ class AccountMoveLine(models.Model):
         help="Bank account on which we should pay the supplier",
         check_company=True,
     )
-    bank_payment_line_id = fields.Many2one(
-        comodel_name="bank.payment.line",
-        readonly=True,
-        index=True,
-        check_company=True,
-    )
     payment_line_ids = fields.One2many(
         comodel_name="account.payment.line",
         inverse_name="move_line_id",
@@ -48,28 +42,54 @@ class AccountMoveLine(models.Model):
             else:
                 ml.partner_bank_id = ml.partner_bank_id
 
-    def _prepare_payment_line_vals(self, payment_order):
+    def _get_linked_move_communication(self):
+        """
+        This will collect the references from referral moves:
+            - Reversal moves
+            - Partial payments
+        """
         self.ensure_one()
-        assert payment_order, "Missing payment order"
+        references = []
+        # Build a recordset to gather moves from which references have already
+        # taken in order to avoid duplicates
+        reference_moves = self.env["account.move"].browse()
+        reference_moves |= self.move_id.reversal_move_id
+        # Retrieve partial payments - e.g.: manual credit notes
+        for (
+            _,
+            _,
+            payment_move_line,
+        ) in self.move_id._get_reconciled_invoices_partials():
+            payment_move = payment_move_line.move_id
+            if payment_move not in reference_moves and (
+                payment_move.payment_reference or payment_move.ref
+            ):
+                references.append(payment_move._get_payment_order_communication())
+        return references
+
+    def _get_communication(self):
+        """
+        Retrieve the communication string for the payment order
+        """
         aplo = self.env["account.payment.line"]
         # default values for communication_type and communication
         communication_type = "normal"
-        communication = self.ref or self.name
+        communication = self.move_id._get_payment_order_communication()
         # change these default values if move line is linked to an invoice
         if self.move_id.is_invoice():
-            if self.move_id.reference_type != "none":
-                communication = self.move_id.ref
+            if (self.move_id.reference_type or "none") != "none":
                 ref2comm_type = aplo.invoice_reference_type2communication_type()
                 communication_type = ref2comm_type[self.move_id.reference_type]
             else:
-                if (
-                    self.move_id.move_type in ("in_invoice", "in_refund")
-                    and self.move_id.ref
-                ):
-                    communication = self.move_id.ref
-                elif "out" in self.move_id.move_type:
-                    # Force to only put invoice number here
-                    communication = self.move_id.name
+                # Add references to communication from lines move
+                references = self._get_linked_move_communication()
+                if references:
+                    communication += " " + " ".join(references)
+        return communication_type, communication
+
+    def _prepare_payment_line_vals(self, payment_order):
+        self.ensure_one()
+        communication_type, communication = self._get_communication()
         if self.currency_id:
             currency_id = self.currency_id.id
             amount_currency = self.amount_residual_currency
